@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>My Class</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="content" id="content"></main>
+<script src="common.js"></script>
+<script>
+if(initLayout('myclass')){
+  $('#content').innerHTML=`
+  <h1 class="page-title">🏫 My Class</h1><p class="sub">Aapki class aur subjects ki jaankari</p>
+  <div class="grid3" style="margin-bottom:18px">
+    <div class="card stat">Program<b>B.Tech CSE</b></div>
+    <div class="card stat">Semester<b>5</b></div>
+    <div class="card stat">Section<b>K23XY</b></div>
+    <div class="card stat">Class Advisor<b style="font-size:1.1rem">${TEACHERS[0].name}</b></div>
+  </div>
+  <div class="card"><h3>Subjects</h3><div class="tw"><table>
+    <tr><th>Code</th><th>Subject</th><th>Teacher</th><th>Credits</th><th>Room</th></tr>
+    ${SUBJECTS.map(s=>`<tr><td>${s.code}</td><td><b>${s.name}</b></td><td>${teacherName(s.t)}</td><td>${s.credits}</td><td>${s.room}</td></tr>`).join('')}
+  </table></div></div>`;
+}
+</script>
+</body>
+</html>

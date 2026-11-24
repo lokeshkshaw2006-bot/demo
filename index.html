@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Login | StudentHub</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="login-wrap">
+  <section class="login-hero">
+    <h1>🎓 StudentHub</h1>
+    <p style="opacity:.9;margin-bottom:20px">Aapki saari university zaruratein, ek hi jagah.</p>
+    <ul>
+      <li>📊 Attendance tracker + calculator</li>
+      <li>🎯 Marks & CGPA target planner</li>
+      <li>💳 Fee, Time Table, Holidays aur bahut kuch</li>
+    </ul>
+  </section>
+  <section class="login-form">
+    <div class="card">
+      <h2>Welcome back 👋</h2>
+      <p class="sub">Apne account mein login karo</p>
+      <label for="reg">Registration No.</label>
+      <input id="reg" inputmode="numeric" maxlength="10" placeholder="e.g. 12345678" autocomplete="username">
+      <div class="err" id="e1"></div>
+      <label for="pw">Password</label>
+      <div class="pw">
+        <input id="pw" type="password" placeholder="Password" autocomplete="current-password">
+        <button type="button" id="eye" aria-label="Show password">👁️</button>
+      </div>
+      <div class="err" id="e2"></div>
+      <label class="chk"><input type="checkbox" id="rem"> Registration no. yaad rakho</label>
+      <button class="btn" id="login" style="width:100%">Login</button>
+      <p class="sub" style="margin:14px 0 0;font-size:.8rem">Demo: koi bhi 5-10 digit Reg No. aur 4+ character password chalega.</p>
+    </div>
+  </section>
+</div>
+<script src="common.js"></script>
+<script>
+if(S.get('user',null))location.replace('dashboard.html');
+const reg=$('#reg'),pw=$('#pw');
+reg.value=S.get('rememberReg','');$('#rem').checked=!!reg.value;
+$('#eye').onclick=()=>pw.type=pw.type==='password'?'text':'password';
+function doLogin(){
+  let ok=true;
+  $('#e1').textContent=$('#e2').textContent='';
+  if(!/^\d{5,10}$/.test(reg.value.trim())){$('#e1').textContent='5 se 10 digit ka registration no. daalo';ok=false}
+  if(pw.value.length<4){$('#e2').textContent='Password kam se kam 4 character ka ho';ok=false}
+  if(!ok)return;
+  const b=$('#login');b.textContent='Logging in...';b.disabled=true;
+  setTimeout(()=>{
+    const r=reg.value.trim(),last=S.get('lastUser',null);
+    S.set('user',last&&last.reg===r?last:{reg:r,name:'Student',photo:null});
+    if($('#rem').checked)S.set('rememberReg',r);else localStorage.removeItem('rememberReg');
+    location.href='dashboard.html';
+  },700);
+}
+$('#login').onclick=doLogin;
+document.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
+</script>
+</body>
+</html>

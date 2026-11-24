@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Portals</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="content" id="content"></main>
+<script src="common.js"></script>
+<script>
+if(initLayout('portals')){
+  $('#content').innerHTML=`
+  <h1 class="page-title">🌐 Portals</h1><p class="sub">Search karo aur apna portal kholo, ya naya portal add karo</p>
+  <input id="q" placeholder="🔍 Portal search karo..." style="max-width:420px;margin-bottom:18px">
+  <div class="grid" id="grid"></div>
+  <div class="card" style="margin-top:22px;max-width:520px"><h3>＋ Apna portal add karo</h3>
+    <label>Naam</label><input id="pn" placeholder="e.g. Library Portal">
+    <label>Link (https://...)</label><input id="pu" placeholder="https://...">
+    <button class="btn sm" id="add" style="margin-top:14px">Add karo</button></div>`;
+  function draw(){
+    const q=$('#q').value.toLowerCase(),mine=S.get('portals',[]);
+    const all=PORTALS.map(p=>({...p})).concat(mine.map((p,i)=>({...p,own:i})));
+    const f=all.filter(p=>p.name.toLowerCase().includes(q));
+    $('#grid').innerHTML=f.map(p=>`<div class="card"><h3>🔗 ${esc(p.name)}</h3><p class="sub" style="word-break:break-all;font-size:.82rem">${esc(p.url)}</p><a class="btn sm" href="${esc(p.url)}" target="_blank" rel="noopener">Kholo ↗</a>${p.own!==undefined?` <button class="btn ghost sm" data-del="${p.own}">Delete</button>`:''}</div>`).join('')||'<p class="sub">Kuch nahi mila 😕</p>';
+    $('#grid').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{mine.splice(+b.dataset.del,1);S.set('portals',mine);draw()});
+  }
+  $('#q').oninput=draw;
+  $('#add').onclick=()=>{
+    const n=$('#pn').value.trim(),u=$('#pu').value.trim();
+    if(!n||!/^https?:\/\/.+/i.test(u))return toast('Naam aur sahi https:// link daalo');
+    const mine=S.get('portals',[]);mine.push({name:n,url:u});S.set('portals',mine);
+    $('#pn').value=$('#pu').value='';draw();toast('Portal add ho gaya ✅');
+  };
+  draw();
+}
+</script>
+</body>
+</html>

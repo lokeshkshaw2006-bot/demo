@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard | StudentHub</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="content" id="content"></main>
+<div class="modal" id="modal"><div class="box" id="mbox"></div></div>
+<script src="common.js"></script>
+<script>
+if(initLayout('')){
+  const user=S.get('user');
+  const WIDGETS={
+    attendance:{t:'Attendance',i:'📊',href:'attendance.html',r:()=>{const p=overallAtt();return `<div class="ring" style="--p:${p};--c:var(--${attColor(p)})"><b>${p}%</b></div><p class="sub" style="text-align:center;margin:10px 0 0">Overall attendance</p>`}},
+    timetable:{t:'Time Table',i:'🗓️',href:'timetable.html',r:()=>{const n=currentOrNext();return n?`<p style="font-size:1.15rem"><b>${n.sub.name}</b></p><p class="sub">${n.live?'🟢 Abhi chal rahi hai':'⏭️ Next class'} · ${n.slot[0]}–${n.slot[1]}<br>📍 ${n.sub.room}</p>`:`<p class="sub">Aaj ki saari classes khatam 🎉</p>`}},
+    fee:{t:'Fee Payment',i:'💳',href:'fee.html',r:()=>{const f=feeState();return `<div style="font-size:1.7rem;font-weight:700" class="${f.due>0?'bad':'ok'}">${money(f.due)}</div><p class="sub">Baaki fee · last date ${fmtDate(FEE_DUE)}</p><div class="bar"><i class="bg-ok" style="width:${f.paid/f.total*100}%"></i></div>`}},
+    marks:{t:'Marks',i:'🎯',href:'marks.html',r:()=>`<div style="font-size:2.2rem;font-weight:700;color:var(--pri)">${cgpa()}</div><p class="sub">Current CGPA</p>`},
+    leave:{t:'Teacher on Leave',i:'🧑‍🏫',href:'teacher-leave.html',r:()=>{const n=TEACHERS.filter(t=>onLeave(t.id,iso(new Date()))).length;return `<div style="font-size:2rem;font-weight:700">${n}</div><p class="sub">${n?'teacher aaj leave par hain':'Aaj koi teacher leave par nahi'}</p>`}},
+    holiday:{t:'Holiday',i:'🎉',href:'holiday.html',r:()=>{const h=nextHoliday();return h?`<p style="font-size:1.1rem"><b>${esc(h.name)}</b></p><p class="sub">${fmtDate(h.date)} ${h.type==='emergency'?'🚨 Emergency':''}</p>`:'<p class="sub">Koi upcoming holiday nahi</p>'}},
+    lpulive:{t:'LPU Live',i:'🎥',href:'lpulive.html',r:()=>{const n=getMsgs().filter(m=>!m.read&&m.from!=='me').length;return `<div style="font-size:2rem;font-weight:700">${n}</div><p class="sub">naye messages</p>`}},
+    rms:{t:'RMS',i:'🎫',href:'rms.html',r:()=>{const n=getTickets().filter(t=>t.step<4).length;return `<div style="font-size:2rem;font-weight:700">${n}</div><p class="sub">requests abhi pending</p>`}},
+    portals:{t:'Portals',i:'🌐',href:'portals.html',r:()=>`<div style="font-size:2rem;font-weight:700">${PORTALS.length+S.get('portals',[]).length}</div><p class="sub">saved portals</p>`},
+    myclass:{t:'My Class',i:'🏫',href:'myclass.html',r:()=>`<p><b>B.Tech CSE · Sem 5</b></p><p class="sub">${SUBJECTS.length} subjects</p>`}
+  };
+  const DEFAULT=['attendance','timetable','fee','marks','leave','holiday'];
+  let order=S.get('widgets',DEFAULT).filter(id=>WIDGETS[id]);
+  const save=()=>S.set('widgets',order);
+
+  $('#content').innerHTML=`
+    <h1 class="page-title">Namaste, ${esc(user.name)} 👋</h1>
+    <p class="sub">Aapke important boxes. ✕ se hatao, ＋ se add karo, drag karke jagah badlo.</p>
+    <div class="grid" id="grid"></div>`;
+
+  const g=$('#grid');
+  function render(){
+    g.innerHTML=order.map((id,i)=>{const w=WIDGETS[id];return `<div class="card widget" draggable="true" data-id="${id}" style="animation-delay:${i*60}ms"><button class="x" title="Hatao">✕</button><h3>${w.i} ${w.t}</h3>${w.r()}</div>`}).join('')+`<div class="card widget add-box" id="addBox">＋ Box add karo</div>`;
+  }
+  render();
+
+  g.addEventListener('click',e=>{
+    if(e.target.closest('#addBox'))return openAdd();
+    const w=e.target.closest('[data-id]');if(!w)return;
+    if(e.target.closest('.x')){order=order.filter(i=>i!==w.dataset.id);save();render();toast('Box hata diya');return}
+    location.href=WIDGETS[w.dataset.id].href;
+  });
+
+  let drag=null;
+  g.addEventListener('dragstart',e=>{const w=e.target.closest('[data-id]');if(w){drag=w.dataset.id;w.classList.add('dragging')}});
+  g.addEventListener('dragover',e=>e.preventDefault());
+  g.addEventListener('drop',e=>{
+    const w=e.target.closest('[data-id]');
+    if(!w||!drag||w.dataset.id===drag)return;
+    order.splice(order.indexOf(drag),1);order.splice(order.indexOf(w.dataset.id),0,drag);
+    save();render();
+  });
+  g.addEventListener('dragend',render);
+
+  const modal=$('#modal');
+  modal.onclick=e=>{if(e.target===modal)modal.classList.remove('show')};
+  function openAdd(){
+    const rest=Object.keys(WIDGETS).filter(id=>!order.includes(id));
+    $('#mbox').innerHTML=`<h3>＋ Box add karo</h3>`+(rest.map(id=>`<div class="row"><span>${WIDGETS[id].i} ${WIDGETS[id].t}</span><button class="btn sm" data-add="${id}">Add</button></div>`).join('')||'<p class="sub">Saare boxes already add hain ✅</p>')+`<div style="margin-top:16px;display:flex;gap:10px"><button class="btn ghost sm" id="reset">Default par reset</button><button class="btn sm" id="close">Band karo</button></div>`;
+    modal.classList.add('show');
+    $('#close').onclick=()=>modal.classList.remove('show');
+    $('#reset').onclick=()=>{order=[...DEFAULT];save();render();modal.classList.remove('show')};
+    $('#mbox').querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{order.push(b.dataset.add);save();render();openAdd()});
+  }
+}
+</script>
+</body>
+</html>

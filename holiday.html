@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Holiday</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="content" id="content"></main>
+<script src="common.js"></script>
+<script>
+if(initLayout('holiday')){
+  let cur=new Date();cur.setDate(1);
+  $('#content').innerHTML=`
+  <h1 class="page-title">🎉 Holiday Calendar</h1><p class="sub">Kis din chutti hai, emergency chutti ki notification bhi yahin milegi</p>
+  <div id="banner"></div>
+  <div class="grid2">
+    <div class="card">
+      <div class="row" style="border:0"><button class="btn sm" id="prev">◀</button><b id="mt" style="font-size:1.1rem"></b><button class="btn sm" id="next">▶</button></div>
+      <div class="cal" id="cal"></div>
+      <p class="sub" style="margin-top:14px;font-size:.82rem"><span class="ok">■</span> Regular holiday &nbsp; <span class="bad">■</span> Emergency holiday</p>
+    </div>
+    <div>
+      <div class="card"><h3>📌 Upcoming holidays</h3><div id="up"></div></div>
+      <div class="card" style="margin-top:18px"><h3>🚨 Emergency holiday (demo)</h3>
+        <input type="date" id="ed" value="${addDays(1)}"><input id="er" placeholder="Reason (e.g. Heavy rain)" style="margin-top:10px">
+        <button class="btn sm" id="eadd" style="margin-top:12px">Emergency chutti declare karo</button></div>
+    </div>
+  </div>`;
+  function draw(){
+    const y=cur.getFullYear(),m=cur.getMonth(),first=new Date(y,m,1).getDay(),days=new Date(y,m+1,0).getDate(),hs=allHolidays(),today=iso(new Date());
+    $('#mt').textContent=cur.toLocaleString('en-IN',{month:'long',year:'numeric'});
+    let h=['S','M','T','W','T','F','S'].map(d=>`<div class="dh">${d}</div>`).join('')+'<div style="visibility:hidden"></div>'.repeat(first);
+    for(let d=1;d<=days;d++){
+      const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`,hol=hs.find(x=>x.date===ds);
+      const cls=[hol?(hol.type==='emergency'?'em':'hol'):'',ds===today?'today':'',new Date(y,m,d).getDay()===0?'sun':''].join(' ');
+      h+=`<div class="${cls}" title="${hol?esc(hol.name):''}">${d}</div>`;
+    }
+    $('#cal').innerHTML=h;
+    const up=hs.filter(x=>x.date>=today).slice(0,8);
+    $('#up').innerHTML=up.map(x=>`<div class="row"><span>${x.type==='emergency'?'🚨':'🎉'} <b>${esc(x.name)}</b></span><small class="sub">${fmtDate(x.date)}</small></div>`).join('')||'<p class="sub">Koi upcoming holiday nahi</p>';
+    const soon=hs.filter(x=>x.type==='emergency'&&x.date>=today&&x.date<=addDays(3))[0];
+    $('#banner').innerHTML=soon?`<div class="card" style="border-color:var(--bad);margin-bottom:18px"><b class="bad">🚨 Emergency Holiday:</b> ${esc(soon.name)} — ${fmtDate(soon.date)}</div>`:'';
+  }
+  $('#prev').onclick=()=>{cur.setMonth(cur.getMonth()-1);draw()};
+  $('#next').onclick=()=>{cur.setMonth(cur.getMonth()+1);draw()};
+  $('#eadd').onclick=()=>{
+    const d=$('#ed').value,r=$('#er').value.trim()||'Emergency Holiday';
+    if(!d)return toast('Date chuno');
+    const e=S.get('emHol',[]);e.push({date:d,name:r,type:'emergency'});S.set('emHol',e);
+    draw();notify('Emergency Holiday',r+' · '+fmtDate(d));
+  };
+  draw();
+}
+</script>
+</body>
+</html>

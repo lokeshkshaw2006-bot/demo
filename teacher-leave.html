@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Teacher on Leave</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="content" id="content"></main>
+<script src="common.js"></script>
+<script>
+if(initLayout('leave')){
+  $('#content').innerHTML=`
+  <h1 class="page-title">🧑‍🏫 Teacher on Leave</h1><p class="sub">Dekho aaj (ya kisi bhi din) kaun sa teacher leave par hai</p>
+  <div class="card" style="max-width:320px;margin-bottom:18px"><label style="margin-top:0">Date chuno</label><input type="date" id="dt" value="${iso(new Date())}"></div>
+  <div class="card"><div id="sum" style="margin-bottom:6px"></div><div id="list"></div>
+  <p class="sub" style="margin-top:14px;font-size:.8rem">Note: "Toggle" button demo ke liye hai (real project mein ye admin/teacher karega).</p></div>`;
+  function draw(){
+    const d=$('#dt').value,L=leaves();
+    const n=TEACHERS.filter(t=>onLeave(t.id,d)).length;
+    $('#sum').innerHTML=`<b>${fmtDate(d)}</b>: ${n?`<span class="bad">${n} teacher leave par</span>`:'<span class="ok">Koi teacher leave par nahi ✅</span>'}`;
+    $('#list').innerHTML=TEACHERS.map(t=>{const l=onLeave(t.id,d);
+      return `<div class="row"><div><b>${t.name}</b><br><small class="sub">${t.dept}</small></div><div><span class="badge ${l?'bad':'ok'}">${l?'On Leave':'Available'}</span> <button class="btn ghost sm" data-id="${t.id}">Toggle</button></div></div>`}).join('');
+    $('#list').querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>{
+      const id=b.dataset.id,arr=L[id]||[];
+      L[id]=arr.includes(d)?arr.filter(x=>x!==d):[...arr,d];
+      S.set('leaves',L);draw();
+    });
+  }
+  $('#dt').onchange=draw;draw();
+}
+</script>
+</body>
+</html>

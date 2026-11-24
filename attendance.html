@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Attendance</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="content" id="content"></main>
+<script src="common.js"></script>
+<script>
+if(initLayout('attendance')){
+  const p=overallAtt(),A=SUBJECTS.reduce((s,x)=>s+x.att,0),H=SUBJECTS.reduce((s,x)=>s+x.held,0);
+  $('#content').innerHTML=`
+  <h1 class="page-title">📊 Attendance</h1><p class="sub">Overall aur subject-wise attendance</p>
+  <div class="grid2">
+    <div class="card">
+      <div class="ring" style="--p:${p};--c:var(--${attColor(p)})"><b>${p}%</b></div>
+      <p style="text-align:center;margin-top:14px">${A} / ${H} classes attend ki</p>
+      <p style="text-align:center" class="${p>=75?'ok':'bad'}">${p>=75?'✅ Aap 75% se upar ho':'⚠️ 75% se neeche ho, dhyan do!'}</p>
+    </div>
+    <div class="card">
+      <h3>🧮 Target Calculator</h3>
+      <label>Subject</label>
+      <select id="sel"><option value="all">Overall (saare subjects)</option>${SUBJECTS.map(s=>`<option value="${s.code}">${s.name}</option>`).join('')}</select>
+      <label>Target %</label><input id="tg" type="number" value="75" min="1" max="99">
+      <button class="btn" id="go" style="margin-top:14px">Calculate</button>
+      <div class="res" id="res" style="margin-top:14px">Result yahan dikhega</div>
+      <hr>
+      <h3>✍️ Manual percentage</h3>
+      <div class="grid3"><input id="ma" type="number" placeholder="Attended"><input id="mt" type="number" placeholder="Total classes"></div>
+      <div class="res" id="mres" style="margin-top:12px">—</div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:18px"><h3>Subject-wise attendance</h3><div class="tw"><table>
+    <tr><th>Subject</th><th>Held</th><th>Attended</th><th>%</th><th style="min-width:140px">Progress</th></tr>
+    ${SUBJECTS.map(s=>{const q=+(s.att/s.held*100).toFixed(1),c=attColor(q);return `<tr><td><b>${s.name}</b><br><small class="sub">${s.code}</small></td><td>${s.held}</td><td>${s.att}</td><td class="${c}"><b>${q}%</b></td><td><div class="bar"><i class="bg-${c}" style="width:${q}%"></i></div></td></tr>`}).join('')}
+  </table></div></div>`;
+
+  $('#go').onclick=()=>{
+    let a,h;
+    if($('#sel').value==='all'){a=A;h=H}
+    else{const s=SUBJECTS.find(x=>x.code===$('#sel').value);a=s.att;h=s.held}
+    const t=+$('#tg').value;
+    if(!(t>0&&t<100))return toast('Target 1 se 99 ke beech daalo');
+    const cur=a/h*100;
+    $('#res').innerHTML=cur>=t
+      ?`✅ Abhi <b>${cur.toFixed(1)}%</b> hai. Aap lagataar <b>${Math.floor(a*100/t-h)}</b> class miss kar sakte ho aur ${t}% se upar rahoge.`
+      :`⚠️ Abhi <b>${cur.toFixed(1)}%</b> hai. ${t}% ke liye lagataar <b>${Math.ceil((t*h-100*a)/(100-t))}</b> class attend karni padegi.`;
+  };
+  const manual=()=>{const a=+$('#ma').value,t=+$('#mt').value;
+    $('#mres').innerHTML=t>0&&a<=t?`Attendance: <b>${(a/t*100).toFixed(1)}%</b>`:'—'};
+  $('#ma').oninput=$('#mt').oninput=manual;
+}
+</script>
+</body>
+</html>

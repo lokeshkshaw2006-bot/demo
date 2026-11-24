@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Marks</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="content" id="content"></main>
+<script src="common.js"></script>
+<script>
+if(initLayout('marks')){
+  const GRADES=[['O (10)',90],['A+ (9)',80],['A (8)',70],['B+ (7)',60],['B (6)',50]];
+  $('#content').innerHTML=`
+  <h1 class="page-title">🎯 Marks</h1><p class="sub">CGPA, subject-wise marks aur target calculator</p>
+  <div class="grid3" style="margin-bottom:18px">
+    <div class="card stat">Overall CGPA<b style="color:var(--pri);font-size:2.4rem">${cgpa()}</b></div>
+    <div class="card stat">Total Credits<b>${SUBJECTS.reduce((s,x)=>s+x.credits,0)}</b></div>
+    <div class="card stat">Best Subject<b style="font-size:1.05rem">${[...SUBJECTS].sort((a,b)=>b.cur-a.cur)[0].name}</b></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><h3>Subject-wise marks</h3><div class="tw"><table>
+      <tr><th>Subject</th><th>CA+MTE (/50)</th><th>Grade pt</th></tr>
+      ${SUBJECTS.map(s=>`<tr><td><b>${s.name}</b><br><small class="sub">${s.credits} credits</small></td><td>${s.cur}<div class="bar" style="margin-top:6px"><i class="bg-${s.cur>=40?'ok':s.cur>=30?'warn':'bad'}" style="width:${s.cur*2}%"></i></div></td><td><b>${s.gp}</b></td></tr>`).join('')}
+    </table></div></div>
+    <div class="card"><h3>🧮 Target Planner</h3>
+      <p class="sub">Final exam (ETE) mein kitne marks chahiye?</p>
+      <label style="margin-top:0">Subject</label><select id="sub">${SUBJECTS.map(s=>`<option value="${s.code}">${s.name}</option>`).join('')}</select>
+      <label>Target grade</label><select id="gr">${GRADES.map(g=>`<option value="${g[1]}">${g[0]} — ${g[1]}+ marks</option>`).join('')}</select>
+      <label>Ya apna target total marks (/100) likho</label><input id="cu" type="number" min="1" max="100" placeholder="optional">
+      <button class="btn" id="go" style="margin-top:14px">Calculate</button>
+      <div class="res" id="res" style="margin-top:14px">Result yahan dikhega</div>
+    </div>
+  </div>`;
+  $('#go').onclick=()=>{
+    const s=SUBJECTS.find(x=>x.code===$('#sub').value);
+    const target=+$('#cu').value||+$('#gr').value;
+    if(target>100)return toast('Target 100 se zyada nahi ho sakta');
+    const need=target-s.cur;
+    $('#res').innerHTML=need<=0?`✅ Aapke paas already ${s.cur}/50 hain. ${target} ka target almost achieve ho chuka hai!`
+      :need>50?`❌ ${target} total ke liye ETE mein ${need}/50 chahiye, jo possible nahi. Thoda low target try karo.`
+      :`📌 <b>${s.name}</b>: ${target} total ke liye ETE mein <b>${need}/50</b> (${(need*2).toFixed(0)}%) marks lane honge.`;
+  };
+}
+</script>
+</body>
+</html>

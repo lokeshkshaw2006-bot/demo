@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fee Payment</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="content" id="content"></main>
+<script src="common.js"></script>
+<script>
+if(initLayout('fee')){
+  function draw(){
+    const f=feeState(),days=Math.ceil((new Date(FEE_DUE+'T00:00')-new Date())/864e5),hist=S.get('feeHist',[]);
+    $('#content').innerHTML=`
+    <h1 class="page-title">💳 Fee Payment</h1><p class="sub">Kitni fee bharni hai aur pehle se kitna bacha hai</p>
+    <div class="grid3">
+      <div class="card stat">Total Fee<b>${money(f.total)}</b></div>
+      <div class="card stat">Paid<b class="ok">${money(f.paid)}</b></div>
+      <div class="card stat">Baaki (Due)<b class="${f.due?'bad':'ok'}">${money(f.due)}</b></div>
+    </div>
+    <div class="card" style="margin-top:18px">
+      <div class="bar"><i class="bg-ok" style="width:${Math.min(f.paid/f.total*100,100)}%"></i></div>
+      <p style="margin-top:10px">${(f.paid/f.total*100).toFixed(0)}% fee jama ho chuki hai · Last date: <b>${fmtDate(FEE_DUE)}</b>
+      <span class="badge ${days<0?'bad':days<10?'warn':'ok'}">${f.due===0?'Sab clear ✅':days<0?'Date nikal gayi!':days+' din baaki'}</span></p>
+    </div>
+    <div class="grid2" style="margin-top:18px">
+      <div class="card"><h3>Fee breakdown</h3><table>
+        ${FEE_ITEMS.map((x,i)=>`<tr><td>${x[0]}</td><td style="text-align:right" class="${i===3?'bad':''}">${money(x[1])}</td></tr>`).join('')}
+        <tr><td><b>Total</b></td><td style="text-align:right"><b>${money(f.total)}</b></td></tr></table>
+        <h3 style="margin-top:18px">Payment history</h3>
+        ${hist.map(h=>`<div class="row"><span>${h.date}</span><b class="ok">${money(h.amt)}</b></div>`).join('')||'<p class="sub">Demo payment abhi nahi hui</p>'}
+      </div>
+      <div class="card"><h3>🧮 Fee Calculator</h3>
+        <label>Kitna pay karna chahte ho? (₹)</label><input id="amt" type="number" min="1" placeholder="e.g. 10000">
+        <div class="res" id="r1" style="margin-top:12px">Amount daalo</div>
+        <label>Kitni installments mein baantna hai?</label><input id="ins" type="number" min="1" value="3">
+        <div class="res" id="r2" style="margin-top:12px"></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">
+          <button class="btn sm" id="pay">Demo payment</button>
+          <a class="btn ghost sm" href="https://ums.lpu.in" target="_blank" rel="noopener">UMS par pay karo ↗</a>
+          <button class="btn ghost sm" id="rst">Reset</button>
+        </div>
+      </div>
+    </div>`;
+    const calc=()=>{
+      const a=+$('#amt').value,n=Math.max(+$('#ins').value||1,1);
+      $('#r1').innerHTML=a>0?(a>f.due?`⚠️ Due sirf ${money(f.due)} hai`:`${money(a)} dene ke baad baaki: <b>${money(f.due-a)}</b>`):'Amount daalo';
+      $('#r2').innerHTML=f.due?`${n} installments mein: <b>${money(Math.ceil(f.due/n))}</b> har baar`:'Koi fee baaki nahi 🎉';
+    };
+    $('#amt').oninput=$('#ins').oninput=calc;calc();
+    $('#pay').onclick=()=>{
+      const a=+$('#amt').value;
+      if(!(a>0&&a<=f.due))return toast('Sahi amount daalo (due se zyada nahi)');
+      S.set('feePaid',f.paid+a);hist.unshift({date:fmtDate(iso(new Date())),amt:a});S.set('feeHist',hist);
+      draw();toast('Payment record ho gayi ✅');
+    };
+    $('#rst').onclick=()=>{localStorage.removeItem('feePaid');localStorage.removeItem('feeHist');draw()};
+  }
+  draw();
+}
+</script>
+</body>
+</html>

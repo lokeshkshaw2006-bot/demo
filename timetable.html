@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Time Table</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="content" id="content"></main>
+<script src="common.js"></script>
+<script>
+if(initLayout('timetable')){
+  const days=['Mon','Tue','Wed','Thu','Fri','Sat'],now=new Date(),today=DAYS[now.getDay()],mins=now.getHours()*60+now.getMinutes();
+  const n=currentOrNext();
+  let t='<table class="tt"><tr><th>Time</th>'+days.map(d=>`<th class="${d===today?'tod':''}">${d}</th>`).join('')+'</tr>';
+  SLOTS.forEach((sl,i)=>{
+    t+=`<tr><td><b>${sl[0]}<br>${sl[1]}</b></td>`+days.map(d=>{
+      const v=TT[d][i],isNow=d===today&&mins>=toMin(sl[0])&&mins<toMin(sl[1]);
+      if(v==='BREAK')return `<td class="brk ${isNow?'now':''}">🍽️ Lunch Break</td>`;
+      if(!v)return `<td class="${isNow?'now':''}" style="color:var(--muted)">Free</td>`;
+      const idx=SUBJECTS.findIndex(s=>s.code===v),s=SUBJECTS[idx];
+      return `<td class="c${idx} ${isNow?'now':''}"><b>${s.code}</b><br>${s.name}<br><small>📍 ${s.room}</small></td>`;
+    }).join('')+'</tr>';
+  });
+  t+='</table>';
+  $('#content').innerHTML=`
+  <h1 class="page-title">🗓️ Time Table</h1><p class="sub">Kaun si class kab hai, break kab hai aur class kahan hogi</p>
+  <div class="card" style="margin-bottom:18px">${n
+    ?`<b>${n.live?'🟢 Abhi chal rahi hai':'⏭️ Next class'}:</b> ${n.sub.name} (${n.sub.code}) · ${n.slot[0]}–${n.slot[1]} · 📍 ${n.sub.room} · 👨‍🏫 ${teacherName(n.sub.t)}`
+    :'🎉 Aaj ki saari classes khatam (ya aaj chutti hai)!'}</div>
+  <div class="card tw">${t}</div>
+  <p class="sub" style="margin-top:12px;font-size:.82rem">Orange border = abhi ka time slot. Orange header = aaj ka din.</p>`;
+}
+</script>
+</body>
+</html>

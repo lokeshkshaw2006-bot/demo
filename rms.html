@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RMS</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="content" id="content"></main>
+<script src="common.js"></script>
+<script>
+if(initLayout('rms')){
+  const STEPS=['Submitted','Assigned','In Progress','Resolved'];
+  const timeline=t=>`<div class="steps">${STEPS.map((s,i)=>`<div class="step ${i<t.step?'done':''}"><i>${i<t.step?'✓':i+1}</i>${s}</div>`).join('')}</div>`;
+  $('#content').innerHTML=`
+  <h1 class="page-title">🎫 RMS</h1><p class="sub">Apni request kahan tak pahunchi, track karo</p>
+  <div class="grid2">
+    <div class="card"><h3>🔍 Track karo</h3>
+      <label style="margin-top:0">RMS / Ticket number</label><input id="tid" placeholder="e.g. RMS1001">
+      <button class="btn" id="trk" style="margin-top:14px">Track</button>
+      <div id="out" style="margin-top:18px"></div></div>
+    <div class="card"><h3>➕ Nayi request</h3>
+      <label style="margin-top:0">Category</label><select id="cat"><option>Hostel</option><option>Academic</option><option>Fee</option><option>Other</option></select>
+      <label>Problem</label><textarea id="dsc" rows="3" placeholder="Apni problem likho..."></textarea>
+      <button class="btn" id="new" style="margin-top:14px">Submit</button></div>
+  </div>
+  <div class="card" style="margin-top:18px"><h3>📋 Meri requests</h3><div id="list"></div></div>`;
+
+  function list(){
+    const T=getTickets();
+    $('#list').innerHTML=T.map(t=>`<div class="row"><div><b>${t.id}</b> · ${esc(t.cat)}<br><small class="sub">${esc(t.desc)}</small></div><div><span class="badge ${t.step===4?'ok':'warn'}">${STEPS[t.step-1]}</span> ${t.step<4?`<button class="btn sm" data-n="${t.id}">Next stage (demo)</button>`:''}</div></div>`).join('')||'<p class="sub">Koi request nahi</p>';
+    $('#list').querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>{
+      const T2=getTickets(),t=T2.find(x=>x.id===b.dataset.n);t.step++;S.set('tickets',T2);list();
+    });
+  }
+  list();
+  $('#trk').onclick=()=>{
+    const id=$('#tid').value.trim().toUpperCase(),t=getTickets().find(x=>x.id===id);
+    $('#out').innerHTML=t?`<p><b>${t.id}</b> · ${esc(t.cat)}<br><small class="sub">${esc(t.desc)}</small></p><br>${timeline(t)}<p style="text-align:center;margin-top:14px"><b>Status: ${STEPS[t.step-1]}</b></p>`:'<p class="bad">❌ Ye ticket number nahi mila</p>';
+  };
+  $('#new').onclick=()=>{
+    const d=$('#dsc').value.trim();if(!d)return toast('Problem likho');
+    const T=getTickets(),id='RMS'+Math.floor(1000+Math.random()*9000);
+    T.unshift({id,cat:$('#cat').value,desc:d,step:1});S.set('tickets',T);
+    $('#dsc').value='';list();toast('Request submit hui. Ticket: '+id);
+  };
+}
+</script>
+</body>
+</html>
